@@ -149,7 +149,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return super.onCreateOptionsMenu(menu);
     }
 
-    @Override
+/*    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.mapTypeNone:
@@ -169,7 +169,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 break;
         }
         return super.onOptionsItemSelected(item);
-    }
+    }*/
 }
 
 

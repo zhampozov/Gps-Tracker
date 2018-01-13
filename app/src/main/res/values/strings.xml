@@ -15,9 +15,8 @@
         completions."
     </string>
     <string name="title_activity_maps">Карта</string>
-    <string name="map_type_none">Map Type None</string>
-    <string name="map_type_normal">Map Type Normal</string>
-    <string name="map_type_terrain">Map Type Terrain</string>
-    <string name="map_type_satellite">Map Type Satellite</string>
-    <string name="map_type_hybrid">Map Type Hybrid</string>
+    <string name="map_type_normal">Радиусты алып тастау</string>
+    <string name="btnLogOut">Жүйеден шығу</string>
+    <string name="btnAbout">Бағдарламаны құрушы</string>
+    <string name="btnSettings">Баптаулар</string>
 </resources>
