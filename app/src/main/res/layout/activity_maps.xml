@@ -1,28 +1,81 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:map="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.example.nurgali.gps_tracker.MapsActivity"
+    tools:context="com.example.nurgali.gps_tracker.activity.MapsActivity"
     android:id="@+id/LinearLayout1"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:weightSum="1">
 
-    <EditText
+    <GridLayout
         android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+    <EditText
+        android:layout_width="267dp"
         android:layout_height="57dp"
         android:inputType="textPersonName"
         android:ems="10"
         android:id="@+id/editText"
-        android:hint="Атау бойынша іздеу..." />
+        android:hint="Атау бойынша іздеу..."
+        android:layout_row="0"
+        android:layout_column="16" />
+
+        <Button
+            android:text="Іздеу"
+            android:layout_width="113dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnSearch"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:onClick="onClickShowPlace" />
+
+    </GridLayout>
 
     <Button
-        android:text="Іздеу"
+        android:text="Радиус қою"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/btnSearch"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:onClick="onClickShowPlace" />
+        android:id="@+id/btnSetRadius"
+        style="@style/Widget.AppCompat.Button.Colored" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:weightSum="1">
+
+        <Button
+            android:text="Әдеттегі"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnSetMapNormal"
+            style="@style/Widget.AppCompat.Button.Colored" />
+
+        <Button
+            android:text="Рельеф"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnSetMapTerrain"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_weight="0.52" />
+
+        <Button
+            android:text="Спутник"
+            android:layout_width="77dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnSetMapSatellite"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_weight="0.80" />
+
+        <Button
+            android:text="Гибрид"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btnSetMapHybrid"
+            style="@style/Widget.AppCompat.Button.Colored" />
+
+    </LinearLayout>
 
     <fragment
 android:id="@+id/map"
