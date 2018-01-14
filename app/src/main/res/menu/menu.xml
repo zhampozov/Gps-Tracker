@@ -1,22 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.example.nurgali.gps_tracker.MapsActivity" >
+    tools:context="com.example.nurgali.gps_tracker.activity.MapsActivity" >
 
     <item
-        android:id="@+id/mapTypeNone"
-        android:title="@string/map_type_none"/>
-    <item
-        android:id="@+id/mapTypeNormal"
+        android:id="@+id/removeRadius"
         android:title="@string/map_type_normal"/>
     <item
-        android:id="@+id/mapTypeTerrain"
-        android:title="@string/map_type_terrain"/>
+        android:id="@+id/btnSettings"
+        android:title="@string/btnSettings"/>
     <item
-        android:id="@+id/mapTypeSatellite"
-        android:title="@string/map_type_satellite"/>
+        android:id="@+id/btnAbout"
+        android:title="@string/btnAbout"/>
     <item
-        android:id="@+id/mapTypeHybrid"
-        android:title="@string/map_type_hybrid"/>
+        android:id="@+id/btnLogOut"
+        android:title="@string/btnLogOut"/>
 
 </menu>
