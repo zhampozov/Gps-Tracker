@@ -7,6 +7,12 @@
         android:id="@+id/removeRadius"
         android:title="@string/map_type_normal"/>
     <item
+        android:id="@+id/btnFindUser"
+        android:title="@string/btnFindUser"/>
+    <item
+        android:id="@+id/btnUserRelations"
+        android:title="@string/btnUserRelations"/>
+    <item
         android:id="@+id/btnSettings"
         android:title="@string/btnSettings"/>
     <item

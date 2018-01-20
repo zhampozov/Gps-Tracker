@@ -1,35 +1,27 @@
 {
   "project_info": {
-    "project_number": "1030154300367",
-    "firebase_url": "https://gps-tracker-164212.firebaseio.com",
-    "project_id": "gps-tracker-164212",
-    "storage_bucket": "gps-tracker-164212.appspot.com"
+    "project_number": "272105734609",
+    "firebase_url": "https://gps-tracker-d7fde.firebaseio.com",
+    "project_id": "gps-tracker-d7fde",
+    "storage_bucket": "gps-tracker-d7fde.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1030154300367:android:10074afcc7f5938e",
+        "mobilesdk_app_id": "1:272105734609:android:10074afcc7f5938e",
         "android_client_info": {
           "package_name": "com.example.nurgali.gps_tracker"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1030154300367-kt06os0bv6o4ko4g19a0siaimn0n866r.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.nurgali.gps_tracker",
-            "certificate_hash": "72ae9f5ff76a7c338c377e772f8ed954bbb519bd"
-          }
-        },
-        {
-          "client_id": "1030154300367-19ka91mn5s1p1ceeuaeokb77sp7p1llo.apps.googleusercontent.com",
+          "client_id": "272105734609-7i02p2c6d84to38vmllrabkgnrg3do89.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCXFg86sE3kZKyI3IlHtKiaZLLuf1mxHMg"
+          "current_key": "AIzaSyBoRl8Rrv8kRgY0tAqpjUjyeEitRVCuh2Y"
         }
       ],
       "services": {
@@ -37,13 +29,8 @@
           "status": 1
         },
         "appinvite_service": {
-          "status": 2,
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1030154300367-19ka91mn5s1p1ceeuaeokb77sp7p1llo.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
+          "status": 1,
+          "other_platform_oauth_client": []
         },
         "ads_service": {
           "status": 2

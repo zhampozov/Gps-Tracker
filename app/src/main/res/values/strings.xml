@@ -19,4 +19,6 @@
     <string name="btnLogOut">Жүйеден шығу</string>
     <string name="btnAbout">Бағдарламаны құрушы</string>
     <string name="btnSettings">Баптаулар</string>
+    <string name="btnFindUser">Найти пользователя</string>
+    <string name="btnUserRelations">Друзья</string>
 </resources>

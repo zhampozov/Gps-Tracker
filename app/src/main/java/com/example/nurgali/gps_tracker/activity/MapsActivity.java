@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -23,8 +24,10 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.nurgali.gps_tracker.R;
+import com.example.nurgali.gps_tracker.UserRelations;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.internal.zzbmn;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -39,22 +42,24 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserInfo;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, LocationListener {
+        GoogleApiClient.OnConnectionFailedListener, LocationListener, GoogleMap.OnMarkerClickListener {
 
     FirebaseAuth mAuth;
     private DatabaseReference mDatabase;
@@ -63,6 +68,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     GoogleApiClient mGoogleApiClient;
     LocationRequest mLocationRequest;
     Marker marker;
+    Double markerLatitude = 0.0;
+    Double userLatitude = 0.0;
+    Double markerLongitude = 0.0;
+    Double userLongitude = 0.0;
+    String foundUid;
     Toast mToast;
     Circle circle;
     private static final int MY_PERMISSION_FINE_LOCATION_REQUEST = 101;
@@ -78,6 +88,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        Intent intent = getIntent();
+        foundUid = intent.getStringExtra(FindUserActivity.EXTRA_MESSAGE);
+
         btnSetRadius = (Button) findViewById(R.id.btnSetRadius);
         btnSetMapNormal = (Button) findViewById(R.id.btnSetMapNormal);
         btnSetMapTerrain = (Button) findViewById(R.id.btnSetMapTerrain);
@@ -91,7 +104,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         View.OnClickListener onClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                switch (v.getId()){
+                switch (v.getId()) {
                     case R.id.btnSetMapNormal:
                         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
                         break;
@@ -105,12 +118,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
                         break;
                     case R.id.btnSetRadius:
-                        circle = mMap.addCircle(new CircleOptions()
-                                .center(new LatLng(51.169942, 71.439279))
-                                .radius(800)
-                                .strokeColor(Color.RED)
-                        );
-                        clicked = true;
+                        if (markerLatitude != 0 && markerLongitude != 0){
+                            circle = mMap.addCircle(new CircleOptions()
+                                    .center(new LatLng(markerLatitude, markerLongitude))
+                                    .radius(800)
+                                    .strokeColor(Color.RED)
+                            );
+                            clicked = true;
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Выберите маркер", Toast.LENGTH_SHORT).show();
+                        }
+
                         break;
 
                 }
@@ -122,23 +140,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnSetMapSatellite.setOnClickListener(onClickListener);
         btnSetMapHybrid.setOnClickListener(onClickListener);
         btnSetRadius.setOnClickListener(onClickListener);
-
-
-/*        btnSetRadius.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                circle = mMap.addCircle(new CircleOptions()
-                        .center(new LatLng(51.169942, 71.439279))
-                        .radius(800)
-                        .strokeColor(Color.RED)
-                );
-                clicked = true;
-            }
-        });*/
     }
 
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public synchronized void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -149,42 +154,81 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mGoogleApiClient.connect();
 
+        System.out.println("/////////************ " + foundUid);
         final Map<String, Marker> markers = new HashMap();
 
-        refDatabase.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                LatLng newLocation = new LatLng(
-                        dataSnapshot.child("latitude").getValue(Long.class),
-                        dataSnapshot.child("longitude").getValue(Long.class)
-                );
-                Marker uAmarker = mMap.addMarker(new MarkerOptions()
-                        .title(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                        .position(newLocation));
-                markers.put(dataSnapshot.getKey(), uAmarker);
-            }
+        if (foundUid != null) {
 
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+            Runnable r = new Runnable() {
+                @Override
+                public void run() {
+                    FirebaseDatabase.getInstance().getReference().child("location").child(foundUid).addChildEventListener(new ChildEventListener() {
+                        @Override
+                        public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                            System.out.println("ds /*//*/*/*/*/*:  " + dataSnapshot);
 
-            }
+                            Location l = null;
 
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                            for (DataSnapshot d : dataSnapshot.getChildren()){
+                                l = d.getValue(Location.class);
+                                System.out.println("lat====: " + l.getLatitude() + "longi=====: " + l.getLongitude());
+                            }
 
-            }
+                            userLongitude = l.getLongitude();
+                            userLatitude = l.getLatitude();
 
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                            System.out.println("userLat: " + userLatitude + " ulong" + userLongitude);
 
-            }
+                            LatLng newLocation = new LatLng(userLatitude ,userLongitude);
+                            System.out.println("new ;" + newLocation);
+                            Marker uAmarker = mMap.addMarker(new MarkerOptions()
+                                    .title("Friend")
+                                    .position(newLocation));
+                            markers.put(dataSnapshot.getKey(), uAmarker);
+                        }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
+                        @Override
+                        public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                        }
 
-            }
-        });
+                        @Override
+                        public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                        }
+
+                        @Override
+                        public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+                }
+            };
+
+            Thread br = new Thread(r);
+            br.start();
+
+        }
+
+       /*     findfriend();
+
+            final Map<String, Marker> markers = new HashMap();
+
+                    LatLng newLocation = new LatLng(markerLatitude, markerLongitude);
+                    System.out.println("new ;" + newLocation);
+                    Marker uAmarker = mMap.addMarker(new MarkerOptions()
+                            .title(FirebaseAuth.getInstance().getCurrentUser().getEmail())
+                            .position(newLocation));
+                    markers.put("foundMarker", uAmarker);
+                }*/
     }
+
+    /*public void findfriend(){
+    }*/
 
 
     @Override
@@ -212,37 +256,58 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onLocationChanged(Location location) {
-        if (location == null){
-            Toast.makeText(this, "Орналасқан орын табылмайды", Toast.LENGTH_LONG).show();
+        if (location == null) {
+            Toast.makeText(this, "Местоположение не найдено", Toast.LENGTH_LONG).show();
         } else {
             LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
-            CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, 13);
-            refDatabase.child(FirebaseAuth.getInstance().getCurrentUser().getUid()).setValue(ll);
-            mMap.animateCamera(update);
-            if(marker != null){
+            /*CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, 13);*/
+            if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                refDatabase.child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("latitude").setValue(ll.latitude);
+                refDatabase.child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("longitude").setValue(ll.longitude);
+            } else {
+                startActivity(new Intent(this, MainActivity.class));
+                finish();
+            }
+            /*mMap.animateCamera(update);*/
+            if (marker != null) {
                 marker.remove();
             }
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
 
             LatLng latLng = new LatLng(latitude, longitude);
-            marker = mMap.addMarker(new MarkerOptions().position(latLng)
-                    .title(FirebaseAuth.getInstance().getCurrentUser().getUid()));
+            if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+                marker = mMap.addMarker(new MarkerOptions().position(latLng)
+                        .title(FirebaseAuth.getInstance().getCurrentUser().getEmail()));
+            } else {
+                startActivity(new Intent(this, MainActivity.class));
+                finish();
+            }
 
                         /*CIRCLE*/
-if(clicked) {
-    float[] distance = new float[2];
-    Location.distanceBetween(latLng.latitude, latLng.longitude, circle.getCenter()
-            .latitude, circle.getCenter().longitude, distance);
+            if (clicked) {
+                float[] distance = new float[2];
+                Location.distanceBetween(latLng.latitude, latLng.longitude, circle.getCenter()
+                        .latitude, circle.getCenter().longitude, distance);
 
-    if (distance[0] <= circle.getRadius()) {
-        mToast.makeText(getApplicationContext(), "inside", Toast.LENGTH_LONG).show();
+                if (distance[0] <= circle.getRadius()) {
+                    mToast.makeText(getApplicationContext(), "inside", Toast.LENGTH_LONG).show();
 
-    } else {
-        //Toast.makeText(getApplicationContext(), "outside", Toast.LENGTH_LONG).show();
-    }
-}
+                } else {
+                    //Toast.makeText(getApplicationContext(), "outside", Toast.LENGTH_LONG).show();
+                }
+            }
         }
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                markerLatitude = marker.getPosition().latitude;
+                markerLongitude = marker.getPosition().longitude;
+                System.out.println("marker clicked1 : " + markerLatitude);
+                return false;
+            }
+        });
     }
 
 
@@ -259,15 +324,19 @@ if(clicked) {
 
         Geocoder gc = new Geocoder(this);
         List<Address> list = gc.getFromLocationName(location, 1);
-        Address address = list.get(0);
-        String locality = address.getLocality();
+        if (!list.isEmpty()) {
+            Address address = list.get(0);
+            String locality = address.getLocality();
 
-        Toast.makeText(this, locality, Toast.LENGTH_LONG).show();
+            Toast.makeText(this, locality, Toast.LENGTH_LONG).show();
 
-        double lat = address.getLatitude();
-        double lng = address.getLongitude();
-        goToLocationZoom(lat, lng, 15);
-        setMarker(locality, lat, lng);
+            double lat = address.getLatitude();
+            double lng = address.getLongitude();
+            goToLocationZoom(lat, lng, 15);
+            setMarker(locality, lat, lng);
+        } else {
+            Toast.makeText(this, "Адрес не найден", Toast.LENGTH_SHORT).show();
+        }
     }
 
 
@@ -298,10 +367,14 @@ if(clicked) {
     }
 
     private void removeEverything() {
-        marker.remove();
-        marker = null;
-        circle.remove();
-        circle = null;
+        if (marker != null) {
+            marker.remove();
+            marker = null;
+        }
+        if (circle != null) {
+            circle.remove();
+            circle = null;
+        }
     }
 
 
@@ -315,13 +388,15 @@ if(clicked) {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.mapTypeNormal:
-                circle.remove();
+            case R.id.removeRadius:
+                if (circle != null) {
+                    circle.remove();
+                }
                 break;
             case R.id.btnAbout:
                 startActivity(new Intent(getApplicationContext(), AboutActivity.class));
                 finish();
-                Toast.makeText(this, "Бағдарламаны құрушы жайлы ақпарат", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Информация о разработчике", Toast.LENGTH_LONG).show();
                 break;
             case R.id.btnLogOut:
                 logout();
@@ -329,7 +404,17 @@ if(clicked) {
             case R.id.btnSettings:
                 startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
                 finish();
-                Toast.makeText(this, "Баптамалар", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Настройки", Toast.LENGTH_LONG).show();
+                break;
+            case R.id.btnFindUser:
+                startActivity(new Intent(getApplicationContext(), FindUserActivity.class));
+                finish();
+                Toast.makeText(this, "Поиск пользователя", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.btnUserRelations:
+                startActivity(new Intent(getApplicationContext(), UserRelations.class));
+                finish();
+                Toast.makeText(this, "Друзья", Toast.LENGTH_SHORT).show();
                 break;
 
         }
@@ -338,22 +423,35 @@ if(clicked) {
 
     private void logout() {
         new AlertDialog.Builder(this)
-                .setTitle("Жүйеден шығу")
-                .setMessage("Жүйеден шығатыныңызға сенімдісіз бе?")
-                .setNegativeButton("Жоқ", new DialogInterface.OnClickListener() {
+                .setTitle("Выйти из системы")
+                .setMessage("Вы уверены что хотите выйти из системы?")
+                .setNegativeButton("Нет", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface arg0, int arg1) {
                     }
                 })
-                .setPositiveButton("Иә", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Да", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface arg0, int arg1) {
                         FirebaseAuth.getInstance().signOut();
                         Log.d("Logout", "Clicked");
-                        Intent i = new Intent(MapsActivity.this, MainActivity.class);
+                        Intent i = new Intent(getApplicationContext(), MainActivity.class);
                         finish();
-                        MapsActivity.this.startActivity(i);
 
                     }
                 }).create().show();
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        markerLatitude = marker.getPosition().latitude;
+        markerLongitude = marker.getPosition().longitude;
+        System.out.println("marker is pressed" + markerLatitude);
+        return false;
+    }
+
+    public String getMarkerName(){
+        String mData = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+        System.out.println("=====:  " + mData);
+        return mData;
     }
 }
 

@@ -23,7 +23,7 @@ import com.google.firebase.database.FirebaseDatabase;
 public class ActivitySignUp extends BaseActivity {
 
     private FirebaseAuth mAuth;
-    DatabaseReference databaseUsers;
+    DatabaseReference databaseUsers, userEmails;
     private EditText etEmail, etPassword, etConfirm;
 
     @Override
@@ -33,6 +33,7 @@ public class ActivitySignUp extends BaseActivity {
 
         mAuth = FirebaseAuth.getInstance();
         databaseUsers = FirebaseDatabase.getInstance().getReference();
+        userEmails = FirebaseDatabase.getInstance().getReference();
 
         Button btnBack = (Button) findViewById(R.id.btnBack);
         etEmail = (EditText) findViewById(R.id.etEmail);
@@ -91,9 +92,10 @@ public class ActivitySignUp extends BaseActivity {
         }
     }
     private void writeNewUser(String userId, String name, String email) {
-        User user = new User(name, email);
+        User user = new User(name, email, userId);
 
         databaseUsers.child("users").child(userId).setValue(user);
+        userEmails.child("userEmails").child(usernameFromEmail(email)).child("uniqueId").setValue(userId);
     }
 
     public void onClickSignUp (View v) {
